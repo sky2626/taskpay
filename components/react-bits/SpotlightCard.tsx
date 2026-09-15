@@ -7,7 +7,7 @@ type Position = { x: number; y: number };
 
 type SpotlightCardProps = React.PropsWithChildren<{
   className?: string;
-  spotlightColor?: `rgba(${number}, ${number}, ${number}, ${number})`;
+  spotlightColor?: string;
 }>;
 
 export function SpotlightCard({
