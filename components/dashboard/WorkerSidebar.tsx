@@ -15,6 +15,7 @@ import {
   Sparkles,
   WalletCards,
 } from "lucide-react";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 
 const navItems = [
   { label: "Overview", href: "/worker", icon: LayoutDashboard },
@@ -68,6 +69,7 @@ export function WorkerSidebar() {
         <Link href="/worker/settings" className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
           <Settings className="h-4 w-4" /> Settings
         </Link>
+        <LogoutButton />
       </div>
     </aside>
   );
