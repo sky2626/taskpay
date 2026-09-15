@@ -16,7 +16,11 @@ export async function POST(
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (![UserRole.BUSINESS, UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(session.user.role)) {
+  const allowedRole =
+    session.user.role === UserRole.BUSINESS ||
+    session.user.role === UserRole.ADMIN ||
+    session.user.role === UserRole.SUPER_ADMIN;
+  if (!allowedRole) {
     return NextResponse.json({ error: "Business account required" }, { status: 403 });
   }
 
@@ -35,12 +39,17 @@ export async function POST(
 
       if (!submission) throw new ReviewError("Submission not found", 404);
 
-      const isAdmin = [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(session.user.role);
+      const isAdmin =
+        session.user.role === UserRole.ADMIN ||
+        session.user.role === UserRole.SUPER_ADMIN;
       if (!isAdmin && (!profile || submission.task.campaign.businessProfileId !== profile.id)) {
         throw new ReviewError("You cannot review this submission", 403);
       }
 
-      if (![SubmissionStatus.SUBMITTED, SubmissionStatus.UNDER_REVIEW].includes(submission.status)) {
+      const reviewable =
+        submission.status === SubmissionStatus.SUBMITTED ||
+        submission.status === SubmissionStatus.UNDER_REVIEW;
+      if (!reviewable) {
         throw new ReviewError("Submission has already been reviewed", 409);
       }
 
@@ -54,7 +63,7 @@ export async function POST(
             reviewNotes: parsed.data.notes,
           },
         });
-        return { status: updated.status, rewardMinor: 0n };
+        return { status: updated.status, rewardMinor: BigInt(0) };
       }
 
       const rewardType = submission.task.category === "SURVEY" ? LedgerEntryType.SURVEY_REWARD : LedgerEntryType.TASK_REWARD;
