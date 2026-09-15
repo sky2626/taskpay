@@ -31,7 +31,8 @@ export default function LoginPage() {
       return;
     }
 
-    const destination = result.user?.role === "BUSINESS" ? "/business" : result.user?.role === "WORKER" ? "/worker" : "/";
+    const role = result.user?.role;
+    const destination = role === "BUSINESS" ? "/business" : role === "WORKER" ? "/worker" : ["ADMIN", "SUPER_ADMIN"].includes(role ?? "") ? "/admin" : "/";
     router.push(destination);
     router.refresh();
   }
@@ -42,7 +43,7 @@ export default function LoginPage() {
         <section>
           <Link href="/" className="text-sm font-semibold uppercase tracking-[0.28em] text-violet-300">TaskPay</Link>
           <h1 className="mt-6 max-w-xl text-4xl font-semibold tracking-tight sm:text-5xl">Sign in to your TaskPay workspace.</h1>
-          <p className="mt-5 max-w-lg text-base leading-7 text-slate-400">Workers return to tasks and earnings. Business users return to campaigns, reviews and analytics.</p>
+          <p className="mt-5 max-w-lg text-base leading-7 text-slate-400">Workers return to tasks and earnings. Business users return to campaigns, and platform operators return to review queues.</p>
         </section>
 
         <SpotlightCard className="p-6 sm:p-8">
