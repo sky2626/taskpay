@@ -2,46 +2,47 @@
 
 TaskPay is a human-task and rewards marketplace connecting businesses that need verified human work with workers who earn by completing legitimate tasks.
 
-## Initial Stack
+## Current implementation
+
+The `phase-1-foundation` branch now includes:
+
+- Next.js + React + TypeScript
+- Tailwind CSS
+- React Bits registry and in-repo interactive components
+- Worker registration, login, sessions and protected routes
+- Worker dashboard, Earn marketplace, levels, surveys and task history
+- Ledger-backed wallet balances
+- Task acceptance and submission APIs
+- Business dashboard and campaign builder
+- PostgreSQL-backed campaign drafts
+- Survey question configuration and worker survey execution
+- Business submission review queue
+- Idempotent reward credits when submitted work is approved
+- Prisma/PostgreSQL data model
+- Redis/PostgreSQL Docker services
+- Dockerfile
+- GitHub Actions CI
+
+## Product direction
+
+TaskPay follows a business-funded work model: businesses fund real campaigns and workers earn from completed, approved work. Optional membership features must not represent guaranteed investment returns or use new member fees to fund existing worker earnings.
+
+## Planned stack
 
 - Next.js
-- React
 - TypeScript
 - Tailwind CSS
 - React Bits
 - PostgreSQL
 - Prisma
 - Redis
-- Auth.js-style session architecture
 - Docker
 - GitHub Actions
 
-## Current Build Status
+## Development workflow
 
-The repository now contains the first working product foundations:
+- `main` is the stable release branch.
+- `develop` is the integration branch.
+- Feature work is developed on feature/phase branches and merged through pull requests.
 
-- Worker authentication and protected routes
-- Worker dashboard and React Bits-powered interaction layer
-- Earn marketplace and task acceptance/submission APIs
-- Worker levels and task history
-- Ledger-backed wallet views
-- Business dashboard shell
-- Campaign list and campaign-builder foundation
-- Prisma domain schema for users, sessions, campaigns, tasks, submissions, ledger entries and withdrawal requests
-
-## Product Roadmap
-
-The detailed product and engineering roadmap is available in [`docs/ROADMAP.md`](docs/ROADMAP.md).
-
-The project is organized into six major milestones:
-
-1. Foundation — product rules, engineering setup, design system, authentication.
-2. Worker MVP — dashboard, levels, marketplace, Watch & Earn, surveys, wallet, withdrawals.
-3. Business Platform — advertiser dashboard, campaign builder, billing.
-4. Growth & Safety — referrals, trust score, anti-fraud, admin, notifications.
-5. Higher-Value Work — AI tasks, testing marketplace, analytics.
-6. Scale & Launch — PWA/mobile, international expansion, security hardening, infrastructure, CI/CD, beta and public launch.
-
-## Core Product Rule
-
-Businesses fund task rewards. Worker subscriptions may provide legitimate platform benefits, but must never be used as promised returns for other workers.
+See `docs/ROADMAP.md` for the full phased development plan.
