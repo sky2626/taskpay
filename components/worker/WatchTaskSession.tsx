@@ -11,6 +11,7 @@ export function WatchTaskSession({ taskId, videoUrl, minimumWatchSeconds, verifi
   const [answer, setAnswer] = useState("");
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [pauseCount, setPauseCount] = useState(0);
   const [seekCount, setSeekCount] = useState(0);
   const [hiddenSeconds, setHiddenSeconds] = useState(0);
@@ -19,19 +20,26 @@ export function WatchTaskSession({ taskId, videoUrl, minimumWatchSeconds, verifi
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const syncVisibility = () => setVisible(document.visibilityState === "visible");
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
+    return () => document.removeEventListener("visibilitychange", syncVisibility);
+  }, []);
+
+  useEffect(() => {
     if (!started) return;
 
     const onBlur = () => setBlurCount((value) => value + 1);
     window.addEventListener("blur", onBlur);
 
     const timer = window.setInterval(() => {
-      const visible = document.visibilityState === "visible";
+      const tabVisible = document.visibilityState === "visible";
       const video = videoRef.current;
       const activelyPlaying = Boolean(video && !video.paused && !video.ended && video.readyState >= 2);
 
-      if (visible && activelyPlaying) {
+      if (tabVisible && activelyPlaying) {
         setVerifiedSeconds((value) => value + 1);
-      } else if (!visible) {
+      } else if (!tabVisible) {
         setHiddenSeconds((value) => value + 1);
       }
     }, 1000);
@@ -75,7 +83,7 @@ export function WatchTaskSession({ taskId, videoUrl, minimumWatchSeconds, verifi
             blurCount,
             videoDuration: video?.duration && Number.isFinite(video.duration) ? Math.round(video.duration) : null,
             finalPlaybackPosition: video ? Math.round(video.currentTime) : null,
-            visibilityStateAtSubmit: document.visibilityState,
+            visibilityStateAtSubmit: visible ? "visible" : "hidden",
           },
         },
       }),
@@ -134,7 +142,7 @@ export function WatchTaskSession({ taskId, videoUrl, minimumWatchSeconds, verifi
 
           <label className="block"><span className="text-sm text-slate-300">{verificationQuestion}</span><input value={answer} onChange={(event) => setAnswer(event.target.value)} className="field-input mt-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" placeholder="Your answer" /></label>
 
-          <button onClick={submit} disabled={loading || !complete || answer.trim().length < 2 || document.visibilityState !== "visible"} className="w-full rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{loading ? "Submitting..." : "Submit for review"}</button>
+          <button onClick={submit} disabled={loading || !complete || answer.trim().length < 2 || !visible} className="w-full rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">{loading ? "Submitting..." : "Submit for review"}</button>
         </>
       ) : null}
 
