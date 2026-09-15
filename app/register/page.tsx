@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, type ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Globe2, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { SpotlightCard } from "@/components/react-bits/SpotlightCard";
@@ -110,7 +110,7 @@ export default function RegisterPage() {
 type FieldProps = {
   icon: typeof UserRound;
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 function Field({ icon: Icon, label, children }: FieldProps) {
