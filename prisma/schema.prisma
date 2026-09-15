@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  WORKER
+  BUSINESS
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  BANNED
+  DELETED
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum TaskStatus {
+  DRAFT
+  APPROVED
+  PUBLISHED
+  PAUSED
+  CLOSED
+  CANCELLED
+}
+
+enum SubmissionStatus {
+  IN_PROGRESS
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum LedgerEntryType {
+  TASK_REWARD
+  SURVEY_REWARD
+  REFERRAL_REWARD
+  WITHDRAWAL
+  WITHDRAWAL_FEE
+  SUBSCRIPTION
+  CAMPAIGN_FUNDING
+  REFUND
+  ADJUSTMENT
+}
+
+enum LedgerEntryStatus {
+  PENDING
+  AVAILABLE
+  RESERVED
+  SETTLED
+  FAILED
+  REVERSED
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  name               String?
+  phone              String?
+  role               UserRole           @default(WORKER)
+  status             UserStatus         @default(PENDING)
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  trustScore         Int                @default(50)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  workerProfile      WorkerProfile?
+  businessProfile    BusinessProfile?
+  submissions        TaskSubmission[]
+  ledgerEntries      LedgerEntry[]
+}
+
+model WorkerProfile {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  countryCode    String?
+  preferredLocale String?
+  currentLevel   Int     @default(0)
+  completedTasks Int     @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BusinessProfile {
+  id              String             @id @default(cuid())
+  userId          String             @unique
+  companyName     String
+  registrationNo  String?
+  countryCode     String?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns Campaign[]
+}
+
+model Campaign {
+  id                String      @id @default(cuid())
+  businessProfileId String
+  name              String
+  description       String?
+  currency          String      @default("GHS")
+  budgetMinor       BigInt      @default(0)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  tasks           Task[]
+}
+
+model Task {
+  id             String     @id @default(cuid())
+  campaignId     String
+  title          String
+  description    String
+  category       String
+  status         TaskStatus @default(DRAFT)
+  rewardMinor    BigInt
+  currency       String     @default("GHS")
+  minimumLevel   Int        @default(0)
+  capacity       Int?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  campaign    Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  submissions TaskSubmission[]
+}
+
+model TaskSubmission {
+  id          String           @id @default(cuid())
+  taskId      String
+  userId      String
+  status      SubmissionStatus @default(IN_PROGRESS)
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+}
+
+model LedgerEntry {
+  id              String            @id @default(cuid())
+  userId          String
+  type            LedgerEntryType
+  status          LedgerEntryStatus @default(PENDING)
+  amountMinor     BigInt
+  currency        String            @default("GHS")
+  reference       String?
+  idempotencyKey  String?           @unique
+  metadata        Json?
+  createdAt       DateTime          @default(now())
+  settledAt       DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@index([createdAt])
+}
