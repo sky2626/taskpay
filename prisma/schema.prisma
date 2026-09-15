@@ -79,6 +79,19 @@ enum WithdrawalStatus {
   CANCELLED
 }
 
+enum CampaignStatus {
+  DRAFT
+  AWAITING_FUNDING
+  FUNDED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  PUBLISHED
+  PAUSED
+  CLOSED
+  CANCELLED
+}
+
 model User {
   id                 String             @id @default(cuid())
   email              String             @unique
@@ -138,20 +151,28 @@ model BusinessProfile {
 }
 
 model Campaign {
-  id                String   @id @default(cuid())
-  businessProfileId String
-  name              String
-  description       String?
-  currency          String   @default("GHS")
-  budgetMinor       BigInt   @default(0)
-  platformFeeMinor  BigInt   @default(0)
-  totalCostMinor    BigInt   @default(0)
-  targetCountryCode String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                   String         @id @default(cuid())
+  businessProfileId    String
+  name                 String
+  description          String?
+  status               CampaignStatus @default(DRAFT)
+  currency             String         @default("GHS")
+  budgetMinor          BigInt         @default(0)
+  platformFeeMinor     BigInt         @default(0)
+  totalCostMinor       BigInt         @default(0)
+  targetCountryCode    String?
+  fundingReference     String?
+  fundedAt             DateTime?
+  submittedForReviewAt DateTime?
+  reviewedAt           DateTime?
+  publishedAt          DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 
   businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
   tasks           Task[]
+
+  @@index([businessProfileId, status])
 }
 
 model Task {
