@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   LineChart,
   ListChecks,
+  PlayCircle,
   Settings,
   Sparkles,
   WalletCards,
@@ -21,6 +22,7 @@ const navItems = [
   { label: "Overview", href: "/worker", icon: LayoutDashboard },
   { label: "Earn", href: "/worker/earn", icon: BadgeDollarSign },
   { label: "Tasks", href: "/worker/tasks", icon: ListChecks },
+  { label: "Watch & Earn", href: "/worker/watch", icon: PlayCircle },
   { label: "Surveys", href: "/worker/surveys", icon: ClipboardList },
   { label: "AI Tasks", href: "/worker/ai-tasks", icon: Sparkles },
   { label: "Levels", href: "/worker/levels", icon: Gem },
@@ -41,34 +43,18 @@ export function WorkerSidebar() {
       <nav className="space-y-1">
         {navItems.map(({ label, href, icon: Icon }) => {
           const isActive = href === "/worker" ? pathname === href : pathname.startsWith(href);
-
           return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition ${
-                isActive
-                  ? "bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/20"
-                  : "text-slate-400 hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
+            <Link key={href} href={href} className={`flex items-center gap-3 rounded-2xl px-3 py-3 text-sm transition ${isActive ? "bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/20" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}>
+              <Icon className="h-4 w-4" />{label}
             </Link>
           );
         })}
       </nav>
 
       <div className="mt-auto space-y-1 border-t border-white/10 pt-5">
-        <Link href="/worker/notifications" className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
-          <Bell className="h-4 w-4" /> Notifications
-        </Link>
-        <Link href="/worker/profile" className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
-          <CircleUserRound className="h-4 w-4" /> Profile
-        </Link>
-        <Link href="/worker/settings" className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
-          <Settings className="h-4 w-4" /> Settings
-        </Link>
+        <Link href="/worker/notifications" className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><Bell className="h-4 w-4" /> Notifications</Link>
+        <Link href="/worker/profile" className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><CircleUserRound className="h-4 w-4" /> Profile</Link>
+        <Link href="/worker/settings" className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><Settings className="h-4 w-4" /> Settings</Link>
         <LogoutButton />
       </div>
     </aside>
