@@ -144,6 +144,9 @@ model Campaign {
   description       String?
   currency          String   @default("GHS")
   budgetMinor       BigInt   @default(0)
+  platformFeeMinor  BigInt   @default(0)
+  totalCostMinor    BigInt   @default(0)
+  targetCountryCode String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -152,20 +155,22 @@ model Campaign {
 }
 
 model Task {
-  id           String     @id @default(cuid())
-  campaignId   String
-  title        String
-  description  String
-  category     String
-  status       TaskStatus @default(DRAFT)
-  rewardMinor  BigInt
-  currency     String     @default("GHS")
-  minimumLevel Int        @default(0)
-  capacity     Int?
-  startsAt     DateTime?
-  endsAt       DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id            String     @id @default(cuid())
+  campaignId    String
+  title         String
+  description   String
+  category      String
+  status        TaskStatus @default(DRAFT)
+  rewardMinor   BigInt
+  currency      String     @default("GHS")
+  countryCode   String?
+  minimumLevel  Int        @default(0)
+  capacity      Int?
+  configuration Json?
+  startsAt      DateTime?
+  endsAt        DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   campaign    Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   submissions TaskSubmission[]
@@ -179,6 +184,7 @@ model TaskSubmission {
   responseData Json?
   submittedAt  DateTime?
   reviewedAt   DateTime?
+  reviewNotes  String?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
