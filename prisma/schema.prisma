@@ -68,6 +68,17 @@ enum LedgerEntryStatus {
   REVERSED
 }
 
+enum WithdrawalStatus {
+  REQUESTED
+  REVIEWING
+  APPROVED
+  PROCESSING
+  PAID
+  FAILED
+  REJECTED
+  CANCELLED
+}
+
 model User {
   id                 String             @id @default(cuid())
   email              String             @unique
@@ -86,6 +97,7 @@ model User {
   submissions     TaskSubmission[]
   ledgerEntries   LedgerEntry[]
   sessions        Session[]
+  withdrawals     WithdrawalRequest[]
 }
 
 model Session {
@@ -188,6 +200,27 @@ model LedgerEntry {
   metadata       Json?
   createdAt      DateTime          @default(now())
   settledAt      DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status])
+  @@index([createdAt])
+}
+
+model WithdrawalRequest {
+  id          String           @id @default(cuid())
+  userId      String
+  amountMinor BigInt
+  currency    String           @default("GHS")
+  method      String
+  destination String
+  status      WithdrawalStatus @default(REQUESTED)
+  riskScore   Int              @default(0)
+  reviewNotes String?
+  providerRef String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  processedAt DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Restrict)
 
