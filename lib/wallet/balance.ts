@@ -31,20 +31,18 @@ export async function getWalletBalance(userId: string, currency = "GHS"): Promis
       LedgerEntryType.ADJUSTMENT,
     ].includes(entry.type);
 
-    if (isCredit && entry.amountMinor > 0n) {
-      lifetimeEarnedMinor += entry.amountMinor;
-    }
+    if (isCredit && entry.amountMinor > 0n) lifetimeEarnedMinor += entry.amountMinor;
+    if (entry.type === LedgerEntryType.WITHDRAWAL && entry.amountMinor < 0n && entry.status === LedgerEntryStatus.SETTLED) withdrawnMinor += -entry.amountMinor;
 
-    if (entry.type === LedgerEntryType.WITHDRAWAL && entry.amountMinor < 0n) {
-      withdrawnMinor += -entry.amountMinor;
-    }
-
-    if (entry.status === LedgerEntryStatus.PENDING) {
-      pendingMinor += entry.amountMinor;
-    }
+    if (entry.status === LedgerEntryStatus.PENDING) pendingMinor += entry.amountMinor;
 
     if (entry.status === LedgerEntryStatus.RESERVED) {
-      reservedMinor += entry.amountMinor;
+      if (entry.amountMinor < 0n) {
+        reservedMinor += -entry.amountMinor;
+        availableMinor += entry.amountMinor;
+      } else {
+        reservedMinor += entry.amountMinor;
+      }
     }
 
     if ([LedgerEntryStatus.AVAILABLE, LedgerEntryStatus.SETTLED].includes(entry.status)) {
@@ -54,7 +52,7 @@ export async function getWalletBalance(userId: string, currency = "GHS"): Promis
 
   return {
     currency,
-    availableMinor,
+    availableMinor: availableMinor > 0n ? availableMinor : 0n,
     pendingMinor,
     reservedMinor,
     lifetimeEarnedMinor,
