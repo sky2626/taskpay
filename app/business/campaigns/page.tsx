@@ -43,7 +43,9 @@ export default async function CampaignsPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             {campaigns.map((campaign) => {
               const task = campaign.tasks[0];
-              const canSubmit = [CampaignStatus.DRAFT, CampaignStatus.REJECTED].includes(campaign.status);
+              const canSubmit =
+                campaign.status === CampaignStatus.DRAFT ||
+                campaign.status === CampaignStatus.REJECTED;
               return (
                 <SpotlightCard key={campaign.id} className="p-6">
                   <div className="flex items-start justify-between gap-4">
@@ -57,7 +59,7 @@ export default async function CampaignsPage() {
 
                   <div className="mt-5 grid grid-cols-3 gap-3 text-sm">
                     <Stat label="Capacity" value={String(task?.capacity ?? 0)} />
-                    <Stat label="Reward" value={formatMoney(task?.rewardMinor ?? 0n)} />
+                    <Stat label="Reward" value={formatMoney(task?.rewardMinor ?? BigInt(0))} />
                     <Stat label="Total" value={formatMoney(campaign.totalCostMinor)} />
                   </div>
 
