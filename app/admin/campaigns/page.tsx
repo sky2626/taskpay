@@ -36,7 +36,7 @@ export default async function AdminCampaignsPage() {
                 <Stat label="Category" value={task?.category ?? "-"} />
                 <Stat label="Capacity" value={String(task?.capacity ?? 0)} />
                 <Stat label="Worker level" value={`Level ${task?.minimumLevel ?? 0}+`} />
-                <Stat label="Reward" value={money(task?.rewardMinor ?? 0n)} />
+                <Stat label="Reward" value={money(task?.rewardMinor ?? BigInt(0))} />
                 <Stat label="Total" value={money(campaign.totalCostMinor)} />
               </div>
               <CampaignReviewActions campaignId={campaign.id} status={campaign.status} />
