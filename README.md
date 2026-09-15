@@ -4,7 +4,7 @@ TaskPay is a human-task and rewards marketplace connecting businesses that need 
 
 ## Current implementation
 
-The `phase-1-foundation` branch now includes:
+The current `main` and `develop` branches include:
 
 - Next.js + React + TypeScript
 - Tailwind CSS
@@ -22,6 +22,10 @@ The `phase-1-foundation` branch now includes:
 - Redis/PostgreSQL Docker services
 - Dockerfile
 - GitHub Actions CI
+
+## Deployment
+
+Vercel should deploy from the latest commit on `main`. When troubleshooting a failed deployment, create or use a fresh deployment from the newest Git commit rather than redeploying an older deployment snapshot.
 
 ## Product direction
 
