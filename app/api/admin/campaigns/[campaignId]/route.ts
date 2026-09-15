@@ -53,7 +53,11 @@ export async function PATCH(
   }
 
   if (action === "REJECT") {
-    if (![CampaignStatus.UNDER_REVIEW, CampaignStatus.APPROVED].includes(campaign.status)) {
+    const reviewable =
+      campaign.status === CampaignStatus.UNDER_REVIEW ||
+      campaign.status === CampaignStatus.APPROVED;
+
+    if (!reviewable) {
       return NextResponse.json({ error: "Campaign is not in a reviewable state" }, { status: 409 });
     }
 
