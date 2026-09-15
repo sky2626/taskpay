@@ -160,14 +160,15 @@ model Task {
 }
 
 model TaskSubmission {
-  id          String           @id @default(cuid())
-  taskId      String
-  userId      String
-  status      SubmissionStatus @default(IN_PROGRESS)
-  submittedAt DateTime?
-  reviewedAt  DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id           String           @id @default(cuid())
+  taskId       String
+  userId       String
+  status       SubmissionStatus @default(IN_PROGRESS)
+  responseData Json?
+  submittedAt  DateTime?
+  reviewedAt   DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
