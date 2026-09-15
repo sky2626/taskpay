@@ -12,7 +12,10 @@ const moderationSchema = z.object({
 
 export async function POST(request: Request, { params }: { params: Promise<{ userId: string }> }) {
   const session = await getCurrentSession();
-  if (!session || ![UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(session.user.role)) {
+  const isAdmin =
+    session?.user.role === UserRole.ADMIN ||
+    session?.user.role === UserRole.SUPER_ADMIN;
+  if (!session || !isAdmin) {
     return NextResponse.json({ error: "Admin access required." }, { status: 403 });
   }
 
