@@ -12,9 +12,22 @@ TaskPay is a human-task and rewards marketplace connecting businesses that need 
 - PostgreSQL
 - Prisma
 - Redis
-- Auth.js
+- Auth.js-style session architecture
 - Docker
 - GitHub Actions
+
+## Current Build Status
+
+The repository now contains the first working product foundations:
+
+- Worker authentication and protected routes
+- Worker dashboard and React Bits-powered interaction layer
+- Earn marketplace and task acceptance/submission APIs
+- Worker levels and task history
+- Ledger-backed wallet views
+- Business dashboard shell
+- Campaign list and campaign-builder foundation
+- Prisma domain schema for users, sessions, campaigns, tasks, submissions, ledger entries and withdrawal requests
 
 ## Product Roadmap
 
