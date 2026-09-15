@@ -162,6 +162,7 @@ model Campaign {
   totalCostMinor       BigInt         @default(0)
   targetCountryCode    String?
   fundingReference     String?
+  adminReviewNotes     String?
   fundedAt             DateTime?
   submittedForReviewAt DateTime?
   reviewedAt           DateTime?
