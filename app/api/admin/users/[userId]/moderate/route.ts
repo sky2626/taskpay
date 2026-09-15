@@ -26,23 +26,34 @@ export async function POST(request: Request, { params }: { params: Promise<{ use
     return NextResponse.json({ error: "No valid moderation change supplied." }, { status: 400 });
   }
 
-  const target = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true } });
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true, status: true, verificationStatus: true, trustScore: true } });
   if (!target) return NextResponse.json({ error: "User not found." }, { status: 404 });
 
   if (target.role === UserRole.SUPER_ADMIN && session.user.role !== UserRole.SUPER_ADMIN) {
     return NextResponse.json({ error: "Only a super admin can moderate another super admin." }, { status: 403 });
   }
 
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: parsed.data,
-    select: { id: true, status: true, verificationStatus: true, trustScore: true },
-  });
+  const user = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.update({
+      where: { id: userId },
+      data: parsed.data,
+      select: { id: true, status: true, verificationStatus: true, trustScore: true },
+    });
 
-  console.info("admin_user_moderation", {
-    actorUserId: session.userId,
-    targetUserId: userId,
-    changes: parsed.data,
+    await tx.auditLog.create({
+      data: {
+        actorUserId: session.userId,
+        action: "USER_MODERATED",
+        targetType: "USER",
+        targetId: userId,
+        metadata: {
+          before: { status: target.status, verificationStatus: target.verificationStatus, trustScore: target.trustScore },
+          after: parsed.data,
+        },
+      },
+    });
+
+    return updated;
   });
 
   return NextResponse.json({ user });
