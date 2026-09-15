@@ -38,13 +38,16 @@ export async function PATCH(
       return NextResponse.json({ error: "Only campaigns under review can be approved" }, { status: 409 });
     }
 
-    await prisma.$transaction([
-      prisma.campaign.update({
+    await prisma.$transaction(async (tx) => {
+      await tx.campaign.update({
         where: { id: campaignId },
         data: { status: CampaignStatus.APPROVED, reviewedAt: now, adminReviewNotes: notes ?? null },
-      }),
-      prisma.task.updateMany({ where: { campaignId }, data: { status: TaskStatus.APPROVED } }),
-    ]);
+      });
+      await tx.task.updateMany({ where: { campaignId }, data: { status: TaskStatus.APPROVED } });
+      await tx.auditLog.create({
+        data: { actorUserId: session.userId, action: "CAMPAIGN_APPROVED", targetType: "CAMPAIGN", targetId: campaignId, metadata: { notes: notes ?? null } },
+      });
+    });
 
     return NextResponse.json({ status: CampaignStatus.APPROVED });
   }
@@ -54,13 +57,16 @@ export async function PATCH(
       return NextResponse.json({ error: "Campaign is not in a reviewable state" }, { status: 409 });
     }
 
-    await prisma.$transaction([
-      prisma.campaign.update({
+    await prisma.$transaction(async (tx) => {
+      await tx.campaign.update({
         where: { id: campaignId },
         data: { status: CampaignStatus.REJECTED, reviewedAt: now, adminReviewNotes: notes ?? null },
-      }),
-      prisma.task.updateMany({ where: { campaignId }, data: { status: TaskStatus.DRAFT } }),
-    ]);
+      });
+      await tx.task.updateMany({ where: { campaignId }, data: { status: TaskStatus.DRAFT } });
+      await tx.auditLog.create({
+        data: { actorUserId: session.userId, action: "CAMPAIGN_REJECTED", targetType: "CAMPAIGN", targetId: campaignId, metadata: { notes: notes ?? null } },
+      });
+    });
 
     return NextResponse.json({ status: CampaignStatus.REJECTED });
   }
@@ -69,13 +75,16 @@ export async function PATCH(
     return NextResponse.json({ error: "Only approved campaigns can be published" }, { status: 409 });
   }
 
-  await prisma.$transaction([
-    prisma.campaign.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.campaign.update({
       where: { id: campaignId },
       data: { status: CampaignStatus.PUBLISHED, publishedAt: now },
-    }),
-    prisma.task.updateMany({ where: { campaignId }, data: { status: TaskStatus.PUBLISHED, startsAt: now } }),
-  ]);
+    });
+    await tx.task.updateMany({ where: { campaignId }, data: { status: TaskStatus.PUBLISHED, startsAt: now } });
+    await tx.auditLog.create({
+      data: { actorUserId: session.userId, action: "CAMPAIGN_PUBLISHED", targetType: "CAMPAIGN", targetId: campaignId },
+    });
+  });
 
   return NextResponse.json({ status: CampaignStatus.PUBLISHED });
 }
