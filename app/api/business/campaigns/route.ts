@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { TaskStatus, UserRole } from "@prisma/client";
+import { Prisma, TaskStatus, UserRole } from "@prisma/client";
 import { z } from "zod";
 import { getCurrentSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
@@ -19,7 +19,11 @@ export async function POST(request: Request) {
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (![UserRole.BUSINESS, UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(session.user.role)) {
+  const allowedRole =
+    session.user.role === UserRole.BUSINESS ||
+    session.user.role === UserRole.ADMIN ||
+    session.user.role === UserRole.SUPER_ADMIN;
+  if (!allowedRole) {
     return NextResponse.json({ error: "Business account required" }, { status: 403 });
   }
 
@@ -33,8 +37,9 @@ export async function POST(request: Request) {
 
   const data = parsed.data;
   const workerBudgetMinor = BigInt(data.participants) * BigInt(data.rewardMinor);
-  const platformFeeMinor = workerBudgetMinor / 4n;
+  const platformFeeMinor = workerBudgetMinor / BigInt(4);
   const totalCostMinor = workerBudgetMinor + platformFeeMinor;
+  const configuration = data.configuration as Prisma.InputJsonValue | undefined;
 
   const campaign = await prisma.$transaction(async (tx) => {
     const created = await tx.campaign.create({
@@ -62,7 +67,7 @@ export async function POST(request: Request) {
         countryCode: data.countryCode,
         minimumLevel: data.minimumLevel,
         capacity: data.participants,
-        configuration: data.configuration,
+        configuration,
       },
     });
 
