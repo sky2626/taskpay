@@ -71,6 +71,7 @@ enum LedgerEntryStatus {
 model User {
   id                 String             @id @default(cuid())
   email              String             @unique
+  passwordHash       String
   name               String?
   phone              String?
   role               UserRole           @default(WORKER)
@@ -80,29 +81,44 @@ model User {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  workerProfile      WorkerProfile?
-  businessProfile    BusinessProfile?
-  submissions        TaskSubmission[]
-  ledgerEntries      LedgerEntry[]
+  workerProfile   WorkerProfile?
+  businessProfile BusinessProfile?
+  submissions     TaskSubmission[]
+  ledgerEntries   LedgerEntry[]
+  sessions        Session[]
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model WorkerProfile {
-  id             String  @id @default(cuid())
-  userId         String  @unique
-  countryCode    String?
+  id              String  @id @default(cuid())
+  userId          String  @unique
+  countryCode     String?
   preferredLocale String?
-  currentLevel   Int     @default(0)
-  completedTasks Int     @default(0)
+  currentLevel    Int     @default(0)
+  completedTasks  Int     @default(0)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BusinessProfile {
-  id              String             @id @default(cuid())
-  userId          String             @unique
-  companyName     String
-  registrationNo  String?
-  countryCode     String?
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  companyName        String
+  registrationNo     String?
+  countryCode        String?
   verificationStatus VerificationStatus @default(UNVERIFIED)
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -110,34 +126,34 @@ model BusinessProfile {
 }
 
 model Campaign {
-  id                String      @id @default(cuid())
+  id                String   @id @default(cuid())
   businessProfileId String
   name              String
   description       String?
-  currency          String      @default("GHS")
-  budgetMinor       BigInt      @default(0)
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  currency          String   @default("GHS")
+  budgetMinor       BigInt   @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
   tasks           Task[]
 }
 
 model Task {
-  id             String     @id @default(cuid())
-  campaignId     String
-  title          String
-  description    String
-  category       String
-  status         TaskStatus @default(DRAFT)
-  rewardMinor    BigInt
-  currency       String     @default("GHS")
-  minimumLevel   Int        @default(0)
-  capacity       Int?
-  startsAt       DateTime?
-  endsAt         DateTime?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id           String     @id @default(cuid())
+  campaignId   String
+  title        String
+  description  String
+  category     String
+  status       TaskStatus @default(DRAFT)
+  rewardMinor  BigInt
+  currency     String     @default("GHS")
+  minimumLevel Int        @default(0)
+  capacity     Int?
+  startsAt     DateTime?
+  endsAt       DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   campaign    Campaign         @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   submissions TaskSubmission[]
@@ -160,17 +176,17 @@ model TaskSubmission {
 }
 
 model LedgerEntry {
-  id              String            @id @default(cuid())
-  userId          String
-  type            LedgerEntryType
-  status          LedgerEntryStatus @default(PENDING)
-  amountMinor     BigInt
-  currency        String            @default("GHS")
-  reference       String?
-  idempotencyKey  String?           @unique
-  metadata        Json?
-  createdAt       DateTime          @default(now())
-  settledAt       DateTime?
+  id             String            @id @default(cuid())
+  userId         String
+  type           LedgerEntryType
+  status         LedgerEntryStatus @default(PENDING)
+  amountMinor    BigInt
+  currency       String            @default("GHS")
+  reference      String?
+  idempotencyKey String?           @unique
+  metadata       Json?
+  createdAt      DateTime          @default(now())
+  settledAt      DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Restrict)
 
