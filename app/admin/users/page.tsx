@@ -1,4 +1,5 @@
 import { SpotlightCard } from "@/components/react-bits/SpotlightCard";
+import { UserModerationControls } from "@/components/admin/UserModerationControls";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminUsersPage() {
@@ -22,7 +23,7 @@ export default async function AdminUsersPage() {
       <header className="border-b border-white/10 pb-7">
         <p className="text-sm text-emerald-200">Admin</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Users</h1>
-        <p className="mt-3 text-sm text-slate-400">Review account role, status, verification and trust score.</p>
+        <p className="mt-3 text-sm text-slate-400">Review account role, status, verification and trust score, and apply moderation changes.</p>
       </header>
 
       <section className="mt-8 space-y-3">
@@ -40,6 +41,7 @@ export default async function AdminUsersPage() {
                 <Stat label="Trust" value={`${user.trustScore}/100`} />
               </div>
             </div>
+            <UserModerationControls userId={user.id} status={user.status} verificationStatus={user.verificationStatus} trustScore={user.trustScore} />
           </SpotlightCard>
         ))}
       </section>
