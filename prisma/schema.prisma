@@ -111,6 +111,7 @@ model User {
   ledgerEntries   LedgerEntry[]
   sessions        Session[]
   withdrawals     WithdrawalRequest[]
+  auditLogs       AuditLog[]
 }
 
 model Session {
@@ -254,4 +255,20 @@ model WithdrawalRequest {
 
   @@index([userId, status])
   @@index([createdAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String
+  targetType  String
+  targetId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId, createdAt])
+  @@index([targetType, targetId])
+  @@index([action, createdAt])
 }
