@@ -16,28 +16,33 @@ export async function getWalletBalance(userId: string, currency = "GHS"): Promis
     select: { type: true, status: true, amountMinor: true },
   });
 
-  let availableMinor = 0n;
-  let pendingMinor = 0n;
-  let reservedMinor = 0n;
-  let lifetimeEarnedMinor = 0n;
-  let withdrawnMinor = 0n;
+  let availableMinor = BigInt(0);
+  let pendingMinor = BigInt(0);
+  let reservedMinor = BigInt(0);
+  let lifetimeEarnedMinor = BigInt(0);
+  let withdrawnMinor = BigInt(0);
 
   for (const entry of entries) {
-    const isCredit = [
-      LedgerEntryType.TASK_REWARD,
-      LedgerEntryType.SURVEY_REWARD,
-      LedgerEntryType.REFERRAL_REWARD,
-      LedgerEntryType.REFUND,
-      LedgerEntryType.ADJUSTMENT,
-    ].includes(entry.type);
+    const isCredit =
+      entry.type === LedgerEntryType.TASK_REWARD ||
+      entry.type === LedgerEntryType.SURVEY_REWARD ||
+      entry.type === LedgerEntryType.REFERRAL_REWARD ||
+      entry.type === LedgerEntryType.REFUND ||
+      entry.type === LedgerEntryType.ADJUSTMENT;
 
-    if (isCredit && entry.amountMinor > 0n) lifetimeEarnedMinor += entry.amountMinor;
-    if (entry.type === LedgerEntryType.WITHDRAWAL && entry.amountMinor < 0n && entry.status === LedgerEntryStatus.SETTLED) withdrawnMinor += -entry.amountMinor;
+    if (isCredit && entry.amountMinor > BigInt(0)) lifetimeEarnedMinor += entry.amountMinor;
+    if (
+      entry.type === LedgerEntryType.WITHDRAWAL &&
+      entry.amountMinor < BigInt(0) &&
+      entry.status === LedgerEntryStatus.SETTLED
+    ) {
+      withdrawnMinor += -entry.amountMinor;
+    }
 
     if (entry.status === LedgerEntryStatus.PENDING) pendingMinor += entry.amountMinor;
 
     if (entry.status === LedgerEntryStatus.RESERVED) {
-      if (entry.amountMinor < 0n) {
+      if (entry.amountMinor < BigInt(0)) {
         reservedMinor += -entry.amountMinor;
         availableMinor += entry.amountMinor;
       } else {
@@ -45,14 +50,17 @@ export async function getWalletBalance(userId: string, currency = "GHS"): Promis
       }
     }
 
-    if ([LedgerEntryStatus.AVAILABLE, LedgerEntryStatus.SETTLED].includes(entry.status)) {
+    const isAvailable =
+      entry.status === LedgerEntryStatus.AVAILABLE ||
+      entry.status === LedgerEntryStatus.SETTLED;
+    if (isAvailable) {
       availableMinor += entry.amountMinor;
     }
   }
 
   return {
     currency,
-    availableMinor: availableMinor > 0n ? availableMinor : 0n,
+    availableMinor: availableMinor > BigInt(0) ? availableMinor : BigInt(0),
     pendingMinor,
     reservedMinor,
     lifetimeEarnedMinor,
