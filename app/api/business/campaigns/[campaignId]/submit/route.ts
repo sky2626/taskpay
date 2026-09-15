@@ -19,10 +19,13 @@ export async function POST(_request: Request, context: { params: Promise<{ campa
   });
 
   if (!campaign) return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
-  if (![CampaignStatus.DRAFT, CampaignStatus.REJECTED].includes(campaign.status)) {
+  const canSubmit =
+    campaign.status === CampaignStatus.DRAFT ||
+    campaign.status === CampaignStatus.REJECTED;
+  if (!canSubmit) {
     return NextResponse.json({ error: "Campaign cannot be submitted from its current state" }, { status: 409 });
   }
-  if (campaign.tasks.length === 0 || campaign.totalCostMinor <= 0n) {
+  if (campaign.tasks.length === 0 || campaign.totalCostMinor <= BigInt(0)) {
     return NextResponse.json({ error: "Campaign is incomplete" }, { status: 409 });
   }
 
