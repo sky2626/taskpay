@@ -45,7 +45,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ withd
   }
 
   if (action === "APPROVE") {
-    if (![WithdrawalStatus.REQUESTED, WithdrawalStatus.REVIEWING].includes(withdrawal.status)) return NextResponse.json({ error: "Withdrawal is not reviewable" }, { status: 409 });
+    const reviewable =
+      withdrawal.status === WithdrawalStatus.REQUESTED ||
+      withdrawal.status === WithdrawalStatus.REVIEWING;
+    if (!reviewable) return NextResponse.json({ error: "Withdrawal is not reviewable" }, { status: 409 });
     await prisma.$transaction(async (tx) => {
       await tx.withdrawalRequest.update({ where: { id: withdrawalId }, data: { status: WithdrawalStatus.APPROVED, reviewNotes: notes ?? null } });
       await tx.auditLog.create({ data: audit("WITHDRAWAL_APPROVED", { riskScore: withdrawal.riskScore }) });
@@ -54,7 +57,11 @@ export async function PATCH(request: Request, context: { params: Promise<{ withd
   }
 
   if (action === "REJECT") {
-    if ([WithdrawalStatus.PAID, WithdrawalStatus.REJECTED, WithdrawalStatus.CANCELLED].includes(withdrawal.status)) return NextResponse.json({ error: "Withdrawal cannot be rejected from its current state" }, { status: 409 });
+    const terminal =
+      withdrawal.status === WithdrawalStatus.PAID ||
+      withdrawal.status === WithdrawalStatus.REJECTED ||
+      withdrawal.status === WithdrawalStatus.CANCELLED;
+    if (terminal) return NextResponse.json({ error: "Withdrawal cannot be rejected from its current state" }, { status: 409 });
     await prisma.$transaction(async (tx) => {
       await tx.withdrawalRequest.update({ where: { id: withdrawalId }, data: { status: WithdrawalStatus.REJECTED, reviewNotes: notes ?? null, processedAt: new Date() } });
       await tx.ledgerEntry.updateMany({ where: { reference: withdrawalId, status: LedgerEntryStatus.RESERVED }, data: { status: LedgerEntryStatus.REVERSED } });
