@@ -46,10 +46,13 @@ export async function POST(request: Request) {
         select: { amountMinor: true, status: true },
       });
 
-      let spendable = 0n;
+      let spendable = BigInt(0);
       for (const entry of entries) {
-        if ([LedgerEntryStatus.AVAILABLE, LedgerEntryStatus.SETTLED].includes(entry.status)) spendable += entry.amountMinor;
-        if (entry.status === LedgerEntryStatus.RESERVED && entry.amountMinor < 0n) spendable += entry.amountMinor;
+        const isSpendable =
+          entry.status === LedgerEntryStatus.AVAILABLE ||
+          entry.status === LedgerEntryStatus.SETTLED;
+        if (isSpendable) spendable += entry.amountMinor;
+        if (entry.status === LedgerEntryStatus.RESERVED && entry.amountMinor < BigInt(0)) spendable += entry.amountMinor;
       }
 
       const amountMinor = BigInt(parsed.data.amountMinor);
