@@ -19,6 +19,9 @@ export default function NewCampaignPage() {
   const [participants, setParticipants] = useState(100);
   const [reward, setReward] = useState(5);
   const [surveyQuestions, setSurveyQuestions] = useState("How often do you use mobile banking?\nWhat feature matters most to you?\nWhat would make you switch providers?");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [watchSeconds, setWatchSeconds] = useState(30);
+  const [verificationQuestion, setVerificationQuestion] = useState("What product or service was featured in the video?");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,11 +37,13 @@ export default function NewCampaignPage() {
     setError(null);
 
     const form = new FormData(event.currentTarget);
-    const questions = surveyQuestions
-      .split("\n")
-      .map((question) => question.trim())
-      .filter(Boolean)
-      .map((prompt, index) => ({ id: `q${index + 1}`, prompt, type: index === 0 ? "text" : "textarea", required: true }));
+    const questions = surveyQuestions.split("\n").map((question) => question.trim()).filter(Boolean).map((prompt, index) => ({ id: `q${index + 1}`, prompt, type: index === 0 ? "text" : "textarea", required: true }));
+
+    const configuration = type === "SURVEY"
+      ? { questions }
+      : type === "WATCH"
+        ? { videoUrl: videoUrl.trim(), minimumWatchSeconds: watchSeconds, verificationQuestion: verificationQuestion.trim() }
+        : {};
 
     const response = await fetch("/api/business/campaigns", {
       method: "POST",
@@ -51,50 +56,45 @@ export default function NewCampaignPage() {
         minimumLevel: Number(form.get("minimumLevel")),
         participants,
         rewardMinor: Math.round(reward * 100),
-        configuration: type === "SURVEY" ? { questions } : {},
+        configuration,
       }),
     });
 
     const result = (await response.json()) as { error?: string; campaignId?: string };
     setSaving(false);
-
     if (!response.ok) {
       setError(result.error ?? "Unable to save campaign draft.");
       return;
     }
-
     router.push("/business/campaigns");
     router.refresh();
   }
+
+  const watchReady = type !== "WATCH" || (videoUrl.trim().length > 0 && verificationQuestion.trim().length > 0 && watchSeconds >= 5);
+  const surveyReady = type !== "SURVEY" || surveyQuestions.trim().length > 0;
 
   return (
     <div className="px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
       <header className="border-b border-white/10 pb-7">
         <Link href="/business" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"><ArrowLeft className="h-4 w-4" /> Business dashboard</Link>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Create a campaign</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">Build the campaign first. Funding, review, fraud controls and publishing are separate steps before workers can see it.</p>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">Build the campaign first. Funding, review and publishing remain separate steps before workers can access it.</p>
       </header>
 
       <form onSubmit={saveDraft} className="mt-8 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
         <div className="space-y-6">
           <SpotlightCard className="p-6">
-            <p className="text-sm text-violet-200">Step 1</p>
-            <h2 className="mt-1 text-xl font-semibold">Choose campaign type</h2>
+            <p className="text-sm text-violet-200">Step 1</p><h2 className="mt-1 text-xl font-semibold">Choose campaign type</h2>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {campaignTypes.map(({ id, label, description, icon: Icon }) => {
                 const selected = id === type;
-                return (
-                  <button key={id} type="button" onClick={() => setType(id)} className={`rounded-2xl border p-4 text-left transition ${selected ? "border-violet-400/40 bg-violet-500/10" : "border-white/10 bg-white/[0.025] hover:border-white/20"}`}>
-                    <div className="flex items-start gap-3"><div className="rounded-xl bg-white/5 p-2 text-violet-200"><Icon className="h-5 w-5" /></div><div><p className="font-medium text-white">{label}</p><p className="mt-1 text-xs leading-5 text-slate-500">{description}</p></div></div>
-                  </button>
-                );
+                return <button key={id} type="button" onClick={() => setType(id)} className={`rounded-2xl border p-4 text-left transition ${selected ? "border-violet-400/40 bg-violet-500/10" : "border-white/10 bg-white/[0.025] hover:border-white/20"}`}><div className="flex items-start gap-3"><div className="rounded-xl bg-white/5 p-2 text-violet-200"><Icon className="h-5 w-5" /></div><div><p className="font-medium text-white">{label}</p><p className="mt-1 text-xs leading-5 text-slate-500">{description}</p></div></div></button>;
               })}
             </div>
           </SpotlightCard>
 
           <SpotlightCard className="p-6">
-            <p className="text-sm text-violet-200">Step 2</p>
-            <h2 className="mt-1 text-xl font-semibold">Campaign details</h2>
+            <p className="text-sm text-violet-200">Step 2</p><h2 className="mt-1 text-xl font-semibold">Campaign details</h2>
             <div className="mt-5 grid gap-5 sm:grid-cols-2">
               <label className="block sm:col-span-2"><span className="text-sm text-slate-300">Campaign name</span><input name="name" required minLength={3} className="field-input mt-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" placeholder="e.g. Mobile banking research" /></label>
               <label className="block sm:col-span-2"><span className="text-sm text-slate-300">Instructions</span><textarea name="description" required minLength={10} className="field-input mt-2 min-h-28 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" placeholder="Explain exactly what workers need to do." /></label>
@@ -103,34 +103,23 @@ export default function NewCampaignPage() {
             </div>
           </SpotlightCard>
 
-          {type === "SURVEY" ? (
+          {type === "SURVEY" ? <SpotlightCard className="p-6"><p className="text-sm text-violet-200">Survey setup</p><h2 className="mt-1 text-xl font-semibold">Questions</h2><p className="mt-2 text-sm leading-6 text-slate-400">Enter one question per line.</p><textarea value={surveyQuestions} onChange={(event) => setSurveyQuestions(event.target.value)} className="field-input mt-5 min-h-40 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" /></SpotlightCard> : null}
+
+          {type === "WATCH" ? (
             <SpotlightCard className="p-6">
-              <p className="text-sm text-violet-200">Survey setup</p>
-              <h2 className="mt-1 text-xl font-semibold">Questions</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-400">Enter one question per line. This is the MVP survey builder; richer question types can be added later.</p>
-              <textarea value={surveyQuestions} onChange={(event) => setSurveyQuestions(event.target.value)} className="field-input mt-5 min-h-40 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" />
+              <p className="text-sm text-violet-200">Watch setup</p><h2 className="mt-1 text-xl font-semibold">Video verification</h2>
+              <div className="mt-5 space-y-4">
+                <label className="block"><span className="text-sm text-slate-300">Video URL</span><input type="url" value={videoUrl} onChange={(event) => setVideoUrl(event.target.value)} className="field-input mt-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" placeholder="https://..." /></label>
+                <label className="block"><span className="text-sm text-slate-300">Minimum watch time (seconds)</span><input type="number" min={5} max={3600} value={watchSeconds} onChange={(event) => setWatchSeconds(Number(event.target.value))} className="field-input mt-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" /></label>
+                <label className="block"><span className="text-sm text-slate-300">Verification question</span><input value={verificationQuestion} onChange={(event) => setVerificationQuestion(event.target.value)} className="field-input mt-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" /></label>
+              </div>
             </SpotlightCard>
           ) : null}
 
-          <SpotlightCard className="p-6">
-            <p className="text-sm text-violet-200">Step 3</p>
-            <h2 className="mt-1 text-xl font-semibold">Capacity and worker reward</h2>
-            <div className="mt-5 grid gap-5 sm:grid-cols-2">
-              <label className="block"><span className="text-sm text-slate-300">Participants</span><input type="number" min={1} value={participants} onChange={(event) => setParticipants(Number(event.target.value))} className="field-input mt-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" /></label>
-              <label className="block"><span className="text-sm text-slate-300">Reward per completed task (GH₵)</span><input type="number" min={0.1} step={0.1} value={reward} onChange={(event) => setReward(Number(event.target.value))} className="field-input mt-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" /></label>
-            </div>
-          </SpotlightCard>
+          <SpotlightCard className="p-6"><p className="text-sm text-violet-200">Step 3</p><h2 className="mt-1 text-xl font-semibold">Capacity and worker reward</h2><div className="mt-5 grid gap-5 sm:grid-cols-2"><label className="block"><span className="text-sm text-slate-300">Participants</span><input type="number" min={1} value={participants} onChange={(event) => setParticipants(Number(event.target.value))} className="field-input mt-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" /></label><label className="block"><span className="text-sm text-slate-300">Reward per completed task (GH₵)</span><input type="number" min={0.1} step={0.1} value={reward} onChange={(event) => setReward(Number(event.target.value))} className="field-input mt-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3" /></label></div></SpotlightCard>
         </div>
 
-        <div>
-          <SpotlightCard className="sticky top-8 p-6" spotlightColor="rgba(16, 185, 129, 0.16)">
-            <p className="text-sm text-slate-400">Draft estimate</p><h2 className="mt-1 text-xl font-semibold">Campaign economics</h2>
-            <div className="mt-6 space-y-3 text-sm"><PriceRow label="Worker rewards" value={estimate.workerCost} /><PriceRow label="Platform fee (25%)" value={estimate.platformFee} /><div className="border-t border-white/10 pt-3"><PriceRow label="Estimated total" value={estimate.total} strong /></div></div>
-            <div className="mt-6 rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.06] p-4 text-xs leading-5 text-emerald-100/80">This is an estimate only. Creating a draft does not charge the business or publish tasks to workers.</div>
-            {error ? <div className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-3 text-sm text-rose-200">{error}</div> : null}
-            <button type="submit" disabled={saving || (type === "SURVEY" && surveyQuestions.trim().length === 0)} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-60"><CheckCircle2 className="h-4 w-4" /> {saving ? "Saving draft..." : "Save draft"}</button>
-          </SpotlightCard>
-        </div>
+        <div><SpotlightCard className="sticky top-8 p-6" spotlightColor="rgba(16, 185, 129, 0.16)"><p className="text-sm text-slate-400">Draft estimate</p><h2 className="mt-1 text-xl font-semibold">Campaign economics</h2><div className="mt-6 space-y-3 text-sm"><PriceRow label="Worker rewards" value={estimate.workerCost} /><PriceRow label="Platform fee (25%)" value={estimate.platformFee} /><div className="border-t border-white/10 pt-3"><PriceRow label="Estimated total" value={estimate.total} strong /></div></div><div className="mt-6 rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.06] p-4 text-xs leading-5 text-emerald-100/80">Saving a draft does not charge the business or publish the task.</div>{error ? <div className="mt-4 rounded-2xl border border-rose-400/20 bg-rose-400/10 p-3 text-sm text-rose-200">{error}</div> : null}<button type="submit" disabled={saving || !surveyReady || !watchReady} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-500 px-4 py-3 text-sm font-medium transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-60"><CheckCircle2 className="h-4 w-4" /> {saving ? "Saving draft..." : "Save draft"}</button></SpotlightCard></div>
       </form>
     </div>
   );
