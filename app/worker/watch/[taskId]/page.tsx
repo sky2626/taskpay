@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { TaskStatus } from "@prisma/client";
 import { SpotlightCard } from "@/components/react-bits/SpotlightCard";
-import { WatchTaskSession } from "@/components/worker/WatchTaskSession";
+import { WatchTaskSessionSecure } from "@/components/worker/WatchTaskSessionSecure";
 import { prisma } from "@/lib/prisma";
 
 type WatchConfig = { videoUrl?: string; minimumWatchSeconds?: number; verificationQuestion?: string };
@@ -23,12 +23,12 @@ export default async function WatchTaskPage({ params }: { params: Promise<{ task
       </header>
       <div className="mt-8 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <SpotlightCard className="p-6">
-          <WatchTaskSession taskId={task.id} videoUrl={config.videoUrl} minimumWatchSeconds={Math.max(5, config.minimumWatchSeconds ?? 30)} verificationQuestion={config.verificationQuestion ?? "What was shown in the video?"} />
+          <WatchTaskSessionSecure taskId={task.id} videoUrl={config.videoUrl} minimumWatchSeconds={Math.max(5, config.minimumWatchSeconds ?? 30)} verificationQuestion={config.verificationQuestion ?? "What was shown in the video?"} />
         </SpotlightCard>
         <SpotlightCard className="p-6">
           <p className="text-sm text-slate-400">Task reward</p>
           <p className="mt-2 text-3xl font-semibold text-emerald-300">{money(task.rewardMinor)}</p>
-          <p className="mt-5 text-sm leading-6 text-slate-400">Complete the viewing timer and verification prompt. Approved submissions are credited to the worker ledger.</p>
+          <p className="mt-5 text-sm leading-6 text-slate-400">The viewing session is bound to a signed server challenge. Only visible, active playback counts toward the required time.</p>
         </SpotlightCard>
       </div>
     </div>
